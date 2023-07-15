@@ -12,8 +12,8 @@ func MakeVector3(x float32, y float32, z float32) Vector3 {
 	return Vector3{x, y, z}
 }
 
-func (vector Vector3) Length() float64 {
-	return math.Sqrt(math.Pow(float64(vector.X), 2) + math.Pow(float64(vector.Y), 2) + math.Pow(float64(vector.Z), 2))
+func (vector Vector3) Length() float32 {
+	return float32(math.Sqrt(math.Pow(float64(vector.X), 2) + math.Pow(float64(vector.Y), 2) + math.Pow(float64(vector.Z), 2)))
 }
 
 func (vector Vector3) Dot(v2 Vector3) float32 {
@@ -51,7 +51,38 @@ func (vector Vector3) DivF(f float32) Vector3 {
 	return Vector3{vector.X / f, vector.Y / f, vector.Z / f}
 }
 
+func (vector Vector3) Normalized() Vector3 {
+	return vector.DivF(vector.Length())
+}
+
+func (vector Vector3) Reflect(normal Vector3) Vector3 {
+	return vector.Sub(normal.MulF(vector.Dot(normal) * 2))
+}
+
+func (vector Vector3) Lerp(to Vector3, factor float32) Vector3 {
+	return Vector3{
+		Lerp(vector.X, to.X, factor),
+		Lerp(vector.Y, to.Y, factor),
+		Lerp(vector.Z, to.Z, factor),
+	}
+}
+
+func (vector Vector3) Invert() Vector3 {
+	return Vector3{
+		-vector.X,
+		-vector.Y,
+		-vector.Z,
+	}
+}
+
+// Comparing
+
+func AreEqualVectors(vec1 Vector3, vec2 Vector3) bool {
+	return vec1.X == vec2.X && vec1.Y == vec2.Y && vec1.Z == vec2.Z
+}
+
 // Matrix multiplication
+
 func (vector Vector3) MatMul(mat *Mat3) Vector3 {
 	multiplied := new(Vector3)
 	multiplied.X = vector.X*mat.GetElement(0, 0) + vector.Y*mat.GetElement(1, 0) + vector.Z*mat.GetElement(2, 0)

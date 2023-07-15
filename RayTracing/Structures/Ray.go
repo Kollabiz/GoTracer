@@ -1,6 +1,8 @@
 package Structures
 
-import "RayTracer/Maths"
+import (
+	"RayTracer/Maths"
+)
 
 const (
 	Epsilon = 0.0000001
@@ -16,7 +18,7 @@ func (ray *Ray) GetPoint(f float32) Maths.Vector3 {
 }
 
 // Intersect preforms Ray - Triangle intersection with Moller-Trumbore algorithm
-func (ray *Ray) Intersect(tri Triangle, intersectionPoint Maths.Vector3, barycentricIntersection Maths.Vector3) bool {
+func (ray *Ray) Intersect(tri Triangle) (hit bool, intersectionPoint, barycentricIntersection Maths.Vector3) {
 	var h, s, q Maths.Vector3
 	e1 := tri.CalcFirstEdge()
 	e2 := tri.CalcSecondEdge()
@@ -25,7 +27,7 @@ func (ray *Ray) Intersect(tri Triangle, intersectionPoint Maths.Vector3, barycen
 	a = e1.Dot(h)
 
 	if a > -Epsilon && a < Epsilon {
-		return false
+		return false, Maths.ZeroVector3(), Maths.ZeroVector3()
 	}
 
 	f = 1 / a
@@ -33,22 +35,21 @@ func (ray *Ray) Intersect(tri Triangle, intersectionPoint Maths.Vector3, barycen
 	u = f * s.Dot(h)
 
 	if u < 0 || u > 1 { // U + V must be less than 1
-		return false
+		return false, Maths.ZeroVector3(), Maths.ZeroVector3()
 	}
 
 	q = s.Cross(e1)
 	v = f * ray.Direction.Dot(q)
 
 	if v < 0 || u+v > 1 {
-		return false
+		return false, Maths.ZeroVector3(), Maths.ZeroVector3()
 	}
 
 	t := f * e2.Dot(q)
 
 	if t <= Epsilon {
-		return false
+		return false, Maths.ZeroVector3(), Maths.ZeroVector3()
 	}
-	intersectionPoint = ray.GetPoint(t)
-	barycentricIntersection = Maths.Vector3{X: u, Y: v, Z: 1 - u - v}
-	return true
+	p := ray.GetPoint(t)
+	return true, p, Maths.Vector3{u, v, 1 - u - v}
 }

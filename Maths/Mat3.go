@@ -1,6 +1,8 @@
 package Maths
 
-import "math"
+import (
+	"math"
+)
 
 type Mat3 struct {
 	data [3][3]float32
@@ -83,4 +85,13 @@ func Mat3RotationZ(angle float64) *Mat3 {
 func Mat3FromEulerAngles(euler Vector3) *Mat3 {
 	// RotationX(euler.X) * RotationY(euler.Y) * RotationZ(euler.Z)
 	return Mat3RotationX(float64(euler.X)).MatMul(Mat3RotationY(float64(euler.Y)).MatMul(Mat3RotationZ(float64(euler.Z))))
+}
+
+func Mat3Scale(scale Vector3) *Mat3 {
+	arr := [3][3]float32{
+		{scale.X, 0, 0},
+		{0, scale.Y, 0},
+		{0, 0, scale.Z},
+	}
+	return Mat3FromArray(arr)
 }
