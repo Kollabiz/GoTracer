@@ -22,3 +22,5 @@ go.work
 
 # Test files (models, texture, etc.)
 Examples/*
+# Test render results
+passes/*

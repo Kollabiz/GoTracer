@@ -10,4 +10,5 @@ type RenderSettings struct {
 	UseTiling                            bool
 	TileWidth                            int
 	TileHeight                           int
+	ShadowSamples                        int
 }

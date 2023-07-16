@@ -29,7 +29,7 @@ func (mesh *Mesh) GetTransformed() []Triangle {
 func (mesh *Mesh) BakeTransform() {
 	mesh.transformed = make([]Triangle, len(mesh.Triangles))
 	for i := 0; i < len(mesh.Triangles); i++ {
-		mesh.transformed[i] = mesh.Triangles[i].MatMul(mesh.rotationMatrix).MatMul(mesh.scaleMatrix)
+		mesh.transformed[i] = mesh.Triangles[i].MatMul(mesh.rotationMatrix).MatMul(mesh.scaleMatrix).Moved(mesh.Position)
 	}
 }
 

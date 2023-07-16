@@ -1,6 +1,8 @@
 package Maths
 
-import "math"
+import (
+	"math"
+)
 
 type Vector3 struct {
 	X float32
@@ -9,7 +11,7 @@ type Vector3 struct {
 }
 
 func MakeVector3(x float32, y float32, z float32) Vector3 {
-	return Vector3{x, y, z}
+	return Vector3{X: x, Y: y, Z: z}
 }
 
 func (vector Vector3) Length() float32 {

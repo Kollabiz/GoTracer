@@ -95,3 +95,12 @@ func Mat3Scale(scale Vector3) *Mat3 {
 	}
 	return Mat3FromArray(arr)
 }
+
+func Mat3FromVectors(v1 Vector3, v2 Vector3, v3 Vector3) *Mat3 {
+	arr := [3][3]float32{
+		{v1.X, v1.Y, v1.Z},
+		{v2.X, v2.Y, v2.Z},
+		{v3.X, v3.Y, v3.Z},
+	}
+	return Mat3FromArray(arr)
+}

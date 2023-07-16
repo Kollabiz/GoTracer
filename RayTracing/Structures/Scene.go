@@ -26,15 +26,15 @@ func NewScene(viewportWidth int, viewportHeight int) *Scene {
 		IndirectIlluminationSampleCount:      16,
 		IndirectIlluminationDepth:            1,
 		DumpDebugPasses:                      true,
-		ProgressiveRenderingPassQuantity:     1,
+		ProgressiveRenderingPassQuantity:     64,
 		UseTiling:                            true,
-		TileWidth:                            32,
-		TileHeight:                           32,
+		TileWidth:                            128,
+		TileHeight:                           128,
 	}
 	sc.renderContext.Scene = sc
 	sc.RenderedTiles = 0
-	sc.renderContext.ShadowIntensity = 0.2
-	sc.renderContext.MinLightIntensity = 0.1
+	sc.renderContext.RenderSettings.ShadowSamples = 1
+	sc.renderContext.MinLightIntensity = 0.3
 	sc.renderContext.BackgroundColor = Color.Color{150, 150, 150}
 	sc.renderContext.ImageWidth = viewportWidth
 	sc.renderContext.ImageHeight = viewportHeight
@@ -88,6 +88,7 @@ func (scene *Scene) RenderScene() {
 	scene.bakeMeshTransforms()
 	tileCountX := int(math.Ceil(float64(scene.renderContext.ImageWidth) / float64(scene.renderContext.RenderSettings.TileWidth)))
 	tileCountY := int(math.Ceil(float64(scene.renderContext.ImageHeight) / float64(scene.renderContext.RenderSettings.TileHeight)))
+	totalTiles := scene.renderContext.RenderSettings.ProgressiveRenderingPassQuantity * tileCountX * tileCountY
 	points := GenerateViewportGrid(scene.renderContext.ImageWidth, scene.renderContext.ImageHeight, scene.Camera.GetViewportPlaneCorners(), scene.Camera.LensSize)
 	focalPoint := Maths.Vector3{0, 0, scene.Camera.FocalLength}.Add(scene.Camera.Position)
 	fmt.Printf(
@@ -129,10 +130,12 @@ Mesh count: %d
 		}
 		scene.passes.AccumulatedPassesCount++
 		for scene.RenderedTiles < tileCountY*tileCountX {
-			fmt.Printf(" Rendering progress: %d%% (%d/%d tiles)   				            \r",
-				pixelAmount,
+			fmt.Printf(" Rendering progress: %d%% (%d/%d tiles | %d/%d passes)   				            \r",
+				int(float32(i*tileCountX*tileCountY+scene.RenderedTiles)/float32(totalTiles)*100),
 				scene.RenderedTiles,
 				tileCountY*tileCountX,
+				i,
+				scene.renderContext.RenderSettings.ProgressiveRenderingPassQuantity,
 			)
 			time.Sleep(10 * time.Millisecond)
 		}

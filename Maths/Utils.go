@@ -20,12 +20,32 @@ func TriInterpolate2(v1 Vector2, v2 Vector2, v3 Vector2, factor Vector3) Vector2
 }
 
 func RandomPointOnHemisphere(normal Vector3, radius float32) Vector3 {
-	x := float32(rand.NormFloat64() + float64(normal.X))
-	y := float32(rand.NormFloat64()+float64(normal.Y)) * radius
-	z := float32(rand.NormFloat64()+float64(normal.Z)) * radius
+	x := float32(rand.NormFloat64()) * radius
+	y := float32(rand.NormFloat64()) * radius
+	if y < 0 {
+		y *= -1
+	}
+	z := float32(rand.NormFloat64())
 	vec := MakeVector3(x, y, z)
-	vec = vec.Div(vec.Normalized())
-	return vec
+	vec = vec.Normalized()
+	return vec.MatMul(GetTangentSpace(normal))
+}
+
+func GetTangentSpace(normal Vector3) *Mat3 {
+	var helper Vector3
+	if normal.X > 0.99 {
+		helper = Vector3{0, 0, 1}
+	} else {
+		helper = Vector3{1, 0, 0}
+	}
+
+	tangent := normal.Cross(helper).Normalized()
+	binormal := normal.Cross(tangent).Normalized()
+	return Mat3FromVectors(
+		tangent,
+		binormal,
+		normal,
+	)
 }
 
 func Lerp(from float32, to float32, factor float32) float32 {

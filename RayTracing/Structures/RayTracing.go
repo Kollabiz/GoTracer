@@ -27,7 +27,7 @@ func TraceStartRay(origin Maths.Vector3, direction Maths.Vector3, ctx *RenderCon
 	result.Depth = ray.RayLength                                            // Depth pass
 	result.Specular = raySpecular                                           // Specular pass
 	result.Glossiness = rayGlossiness                                       // Glossiness pass
-	result.Diffuse.IMul(globalIllumination.Diffuse)
+	//result.Diffuse.IMul(globalIllumination.Diffuse)
 	return result
 }
 
