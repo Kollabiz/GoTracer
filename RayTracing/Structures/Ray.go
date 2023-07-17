@@ -18,7 +18,7 @@ func (ray *Ray) GetPoint(f float32) Maths.Vector3 {
 }
 
 // Intersect preforms Ray - Triangle intersection with Moller-Trumbore algorithm
-func (ray *Ray) Intersect(tri Triangle) (hit bool, intersectionPoint, barycentricIntersection Maths.Vector3) {
+func (ray *Ray) Intersect(tri *Triangle) (hit bool, intersectionPoint, barycentricIntersection Maths.Vector3) {
 	var h, s, q Maths.Vector3
 	e1 := tri.CalcFirstEdge()
 	e2 := tri.CalcSecondEdge()

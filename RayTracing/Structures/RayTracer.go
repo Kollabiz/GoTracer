@@ -38,24 +38,28 @@ func (ray RayIntersection) GetHitMaterial() *Material {
 
 func TraceRay(origin Maths.Vector3, direction Maths.Vector3, ctx *RenderContext, excludeTriangle *Triangle) RayIntersection {
 	ray := Ray{Origin: origin, Direction: direction}
-	var minDepth float64 = math.Inf(1)
+	var minDepth float32 = math.MaxFloat32
+	var tri *Triangle
 	minResult := MakeNonHitRay()
 	for i := 0; i < len(ctx.Scene.Meshes); i++ {
 		mesh := ctx.Scene.Meshes[i].GetTransformed()
 		for j := 0; j < len(mesh); j++ {
-			tri := mesh[j]
-			if excludeTriangle != nil && AreEqualTriangles(tri, *excludeTriangle) {
+			tri = &mesh[j]
+			if excludeTriangle != nil && AreEqualTriangles(tri, excludeTriangle) {
+				continue
+			}
+			if tri.TriangleNormal.Dot(direction) > 0 {
 				continue
 			}
 			rayHit, hitPos, bHitPos := ray.Intersect(tri)
 			if rayHit {
 				rayLength := hitPos.Sub(origin).Length()
-				if float64(rayLength) < minDepth {
-					minDepth = float64(rayLength)
+				if rayLength < minDepth {
+					minDepth = rayLength
 					minResult = MakeRayIntersection(
 						true,
 						&ctx.Scene.Meshes[i],
-						&tri,
+						tri,
 						hitPos,
 						bHitPos,
 						rayLength,

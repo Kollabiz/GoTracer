@@ -22,18 +22,21 @@ func GenerateViewportGrid(imgWidth int, imgHeight int, viewportCorners [4]Maths.
 }
 
 func RenderTile(points [][]Maths.Vector3, focalPoint Maths.Vector3, startFragment Maths.Vector2, endFragment Maths.Vector2, passes *RenderPasses, ctx *RenderContext) {
-	for fragmentX := int(startFragment.X); fragmentX < int(endFragment.X); fragmentX++ {
-		if fragmentX >= passes.Width {
-			continue
-		}
-		for fragmentY := int(startFragment.Y); fragmentY < int(endFragment.Y); fragmentY++ {
-			if fragmentY >= passes.Height {
+	for i := 0; i < ctx.RenderSettings.ProgressiveRenderingPassQuantity; i++ {
+		for fragmentX := int(startFragment.X); fragmentX < int(endFragment.X); fragmentX++ {
+			if fragmentX >= passes.Width {
 				continue
 			}
-			point := points[fragmentX][fragmentY].Add(ctx.Scene.Camera.Position)
-			rayDirection := point.Sub(focalPoint).Normalized()
-			ray := TraceStartRay(point, rayDirection, ctx)
-			passes.DrawRay(fragmentX, fragmentY, ray)
+			for fragmentY := int(startFragment.Y); fragmentY < int(endFragment.Y); fragmentY++ {
+				if fragmentY >= passes.Height {
+					continue
+				}
+				point := points[fragmentX][fragmentY].Add(ctx.Scene.Camera.Position)
+				rayDirection := point.Sub(focalPoint).Normalized()
+				ray := TraceStartRay(point, rayDirection, ctx)
+				passes.DrawRay(fragmentX, fragmentY, ray)
+				ctx.Scene.RenderedPixels++
+			}
 		}
 	}
 	ctx.Scene.RenderedTiles++

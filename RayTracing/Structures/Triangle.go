@@ -29,7 +29,7 @@ func MakeTriangle(v1 *Vertex, v2 *Vertex, v3 *Vertex, material *Material) Triang
 
 // Comparing
 
-func AreEqualTriangles(tri1 Triangle, tri2 Triangle) bool {
+func AreEqualTriangles(tri1 *Triangle, tri2 *Triangle) bool {
 	return Maths.AreEqualVectors(tri1.V1.Position, tri2.V1.Position) &&
 		Maths.AreEqualVectors(tri1.V2.Position, tri2.V2.Position) &&
 		Maths.AreEqualVectors(tri1.V3.Position, tri2.V3.Position)

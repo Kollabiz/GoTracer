@@ -6,10 +6,11 @@ import (
 	"RayTracer/ObjParser"
 	"RayTracer/RayTracing/Structures"
 	"RayTracer/RayTracing/Structures/LightSources"
+	"testing"
 )
 
-func main() {
-	scene := Structures.NewScene(512, 512)
+func TestRender(t *testing.T) {
+	scene := Structures.NewScene(256, 256)
 	scene.Camera.SetRotation(Maths.Vector3{
 		X: 0,
 		Y: 0,
@@ -24,7 +25,7 @@ func main() {
 		Intensity: 1.7,
 	}
 	for i := 0; i < len(meshes); i++ {
-		meshes[i].SetRotation(Maths.Vector3{X: -24})
+		meshes[i].SetRotation(Maths.Vector3{X: 0})
 	}
 	scene.AddLight(&pointLight)
 	scene.AddMeshes(meshes)

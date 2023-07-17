@@ -54,3 +54,7 @@ func (mesh *Mesh) GetRotation() Maths.Vector3 {
 func (mesh *Mesh) GetScale() Maths.Vector3 {
 	return mesh.scale
 }
+
+func (mesh *Mesh) GetTransformMatrix() *Maths.Mat3 {
+	return mesh.rotationMatrix.MatMul(mesh.scaleMatrix)
+}
