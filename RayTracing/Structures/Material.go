@@ -7,10 +7,11 @@ import (
 
 // Material represents a material for meshes, containing diffuse, specular, emission and normal information
 type Material struct {
-	DiffuseColor  Color.Color
-	SpecularColor Color.Color
-	EmissionColor Color.Color
-	Glossiness    float32
+	DiffuseColor     Color.Color
+	SpecularColor    Color.Color
+	EmissionColor    Color.Color
+	EmissionStrength float32
+	Glossiness       float32
 	// Textures
 	DiffuseTexture  *Texture2
 	SpecularTexture *Texture2

@@ -4,10 +4,6 @@ import (
 	"RayTracer/Maths"
 )
 
-const (
-	Epsilon = 0.0000001
-)
-
 type Ray struct {
 	Origin    Maths.Vector3
 	Direction Maths.Vector3

@@ -1,9 +1,21 @@
 package Maths
 
 import (
-	"RayTracer/Color"
+	"math"
 	"math/rand"
 )
+
+func Frac(f float64) float64 {
+	return math.Mod(f, 1)
+}
+
+func Clamp(f float32, min float32, max float32) float32 {
+	return float32(math.Max(math.Min(float64(f), float64(max)), float64(min)))
+}
+
+func Rand(co Vector2) float64 {
+	return Frac(math.Sin(float64(co.Dot(Vector2{12.9898, 78.233}))) * 43758.5453)
+}
 
 func DegToRad(deg float64) float64 {
 	return deg * 0.01745329
@@ -50,14 +62,6 @@ func GetTangentSpace(normal Vector3) *Mat3 {
 
 func Lerp(from float32, to float32, factor float32) float32 {
 	return from*(1-factor) + to*factor
-}
-
-func MakeColor2DArray(dim1 int, dim2 int) [][]Color.Color {
-	arr := make([][]Color.Color, dim1)
-	for i := 0; i < dim1; i++ {
-		arr[i] = make([]Color.Color, dim2)
-	}
-	return arr
 }
 
 func MakeFloat2DArray(dim1 int, dim2 int) [][]float32 {

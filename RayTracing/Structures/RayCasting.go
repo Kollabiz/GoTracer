@@ -23,7 +23,8 @@ func MakeNonHitRay() RayIntersection {
 }
 
 func (ray RayIntersection) GetHitNormal() Maths.Vector3 {
-	return ray.HitTriangle.GetSmoothNormal(ray.BarycentricHit)
+	//return ray.HitTriangle.GetSmoothNormal(ray.BarycentricHit)
+	return ray.HitTriangle.TriangleNormal
 }
 
 func (ray RayIntersection) GetHitUv() Maths.Vector2 {
@@ -36,7 +37,22 @@ func (ray RayIntersection) GetHitMaterial() *Material {
 
 // Tracing a single ray
 
-func TraceRay(origin Maths.Vector3, direction Maths.Vector3, ctx *RenderContext, excludeTriangle *Triangle) RayIntersection {
+func triScale(tri *Triangle) float32 {
+	return (tri.CalcFirstEdge().Length() + tri.CalcSecondEdge().Length() + tri.CalcThirdEdge().Length()) / 3
+}
+
+func canHit(rayOrig, rayDirection Maths.Vector3, tri *Triangle) bool {
+	midpoint := tri.GetCenter()
+	centerRayDir := midpoint.Sub(rayOrig).Normalized()
+	longestEdge := float32(math.Max(math.Max(float64(tri.CalcFirstEdge().Length()), float64(tri.CalcSecondEdge().Length())), float64(tri.CalcThirdEdge().Length())))
+	dot := 1 - centerRayDir.Dot(rayDirection)
+	if dot*triScale(tri) > longestEdge {
+		return false
+	}
+	return true
+}
+
+func CastRay(origin Maths.Vector3, direction Maths.Vector3, ctx *RenderContext, excludeTriangle *Triangle) RayIntersection {
 	ray := Ray{Origin: origin, Direction: direction}
 	var minDepth float32 = math.MaxFloat32
 	var tri *Triangle
@@ -48,7 +64,7 @@ func TraceRay(origin Maths.Vector3, direction Maths.Vector3, ctx *RenderContext,
 			if excludeTriangle != nil && AreEqualTriangles(tri, excludeTriangle) {
 				continue
 			}
-			if tri.TriangleNormal.Dot(direction) > 0 {
+			if tri.TriangleNormal.Dot(direction) >= 0 {
 				continue
 			}
 			rayHit, hitPos, bHitPos := ray.Intersect(tri)

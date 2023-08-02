@@ -18,7 +18,7 @@ func TraceSoftShadow(position Maths.Vector3, lightPosition Maths.Vector3, lightR
 	sampleRadius := Maths.Vector3{Y: lightRadius, Z: dist}.Normalized().Dot(Maths.Vector3{Y: 1})
 	for i := 0; i < rayCount; i++ {
 		rayDirection := Maths.RandomPointOnHemisphere(rayNormal, sampleRadius)
-		ray := TraceRay(position, rayDirection, ctx, excludeTriangle)
+		ray := CastRay(position, rayDirection, ctx, excludeTriangle)
 		if !ray.Hit || ray.RayLength > dist {
 			energy++
 		} else {
@@ -31,7 +31,7 @@ func TraceSoftShadow(position Maths.Vector3, lightPosition Maths.Vector3, lightR
 func TraceSimpleShadow(position Maths.Vector3, lightPosition Maths.Vector3, ctx *RenderContext, excludeTriangle *Triangle) float32 {
 	rayDir := lightPosition.Sub(position).Normalized()
 	dist := lightPosition.Sub(position).Length()
-	ray := TraceRay(position, rayDir, ctx, excludeTriangle)
+	ray := CastRay(position, rayDir, ctx, excludeTriangle)
 	if !ray.Hit || ray.RayLength > dist {
 		return 1
 	} else {

@@ -1,10 +1,10 @@
 package Structures
 
 import (
-	"RayTracer/Color"
 	"RayTracer/Maths"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 )
 
@@ -15,32 +15,16 @@ type Scene struct {
 	RenderedTiles  int
 	RenderedPixels int
 	RenderContext  *RenderContext
-	passes         *RenderPasses
+	imageBuffer    *ImageBuffer
 }
 
-func NewScene(viewportWidth int, viewportHeight int) *Scene {
+func NewScene(ctx *RenderContext) *Scene {
 	sc := new(Scene)
-	sc.RenderContext = new(RenderContext)
-	sc.RenderContext.RenderSettings = &RenderSettings{
-		UseIndirectIllumination:              false,
-		OptimizeIndirectIlluminationRayCount: false,
-		IndirectIlluminationSampleCount:      16,
-		IndirectIlluminationDepth:            1,
-		DumpDebugPasses:                      true,
-		ProgressiveRenderingPassQuantity:     32,
-		UseTiling:                            true,
-		TileWidth:                            16,
-		TileHeight:                           16,
-	}
+	sc.RenderContext = ctx
 	sc.RenderContext.Scene = sc
 	sc.RenderedTiles = 0
-	sc.RenderContext.RenderSettings.ShadowSamples = 1
-	sc.RenderContext.MinLightIntensity = 0.3
-	sc.RenderContext.BackgroundColor = Color.Color{150, 150, 150}
-	sc.RenderContext.ImageWidth = viewportWidth
-	sc.RenderContext.ImageHeight = viewportHeight
-	sc.passes = NewRenderPasses(viewportWidth, viewportHeight)
-	sc.Camera = MakeCamera(Maths.ZeroVector3(), Maths.ZeroVector3(), Maths.LensSizeFromAspectRatio(viewportWidth, viewportHeight), 8)
+	sc.imageBuffer = NewImageBuffer(ctx.ImageWidth, ctx.ImageHeight)
+	sc.Camera = MakeCamera(Maths.ZeroVector3(), Maths.ZeroVector3(), Maths.LensSizeFromAspectRatio(ctx.ImageWidth, ctx.ImageHeight), 8)
 	return sc
 }
 
@@ -88,9 +72,11 @@ func (scene *Scene) RenderScene() {
 	scene.bakeMeshTransforms()
 	tileCountY := int(math.Ceil(float64(scene.RenderContext.ImageHeight) / float64(scene.RenderContext.RenderSettings.TileHeight)))
 	tileCountX := int(math.Ceil(float64(scene.RenderContext.ImageWidth) / float64(scene.RenderContext.RenderSettings.TileWidth)))
-	pixelAmount := scene.RenderContext.ImageWidth * scene.RenderContext.ImageHeight * scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity
+	pixelAmount := scene.RenderContext.ImageWidth * scene.RenderContext.ImageHeight
 	points := GenerateViewportGrid(scene.RenderContext.ImageWidth, scene.RenderContext.ImageHeight, scene.Camera.GetViewportPlaneCorners(), scene.Camera.LensSize)
 	focalPoint := Maths.Vector3{0, 0, scene.Camera.FocalLength}.Add(scene.Camera.Position)
+	var renderedSamples int
+	var mutex sync.Mutex
 	fmt.Printf(
 		`------------DEBUG--------------
 Image width: %d
@@ -114,7 +100,6 @@ Mesh count: %d
 		scene.Camera.LensSize.Y,
 		len(scene.Meshes),
 	)
-	scene.passes.AccumulatedPassesCount = scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity
 	for tileX := 0; tileX < tileCountX; tileX++ {
 		for tileY := 0; tileY < tileCountY; tileY++ {
 			tileStart := Maths.Vector2{
@@ -125,19 +110,19 @@ Mesh count: %d
 				float32((tileX + 1) * scene.RenderContext.RenderSettings.TileWidth),
 				float32((tileY + 1) * scene.RenderContext.RenderSettings.TileHeight),
 			}
-			go RenderTile(points, focalPoint, tileStart, tileEnd, scene.passes, scene.RenderContext)
+			go RenderTile(points, focalPoint, tileStart, tileEnd, scene.imageBuffer, scene.RenderContext, &mutex, &renderedSamples)
 		}
 	}
 	for scene.RenderedTiles < tileCountY*tileCountX {
-		//fmt.Printf(" Rendering progress: %d%% (%d/%d tiles | %d/%d pixels)   				            \r",
-		//	int(float32(scene.RenderedPixels)/float32(pixelAmount)*100),
-		//	scene.RenderedTiles,
-		//	tileCountY*tileCountX,
-		//	scene.RenderedPixels,
-		//	pixelAmount,
-		//)
+		fmt.Printf(" Rendering progress: %d%% (%d/%d tiles | %d/%d pixels)   				            \r",
+			int(float32(scene.RenderedPixels)/float32(pixelAmount*scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity)*100),
+			scene.RenderedTiles,
+			tileCountY*tileCountX,
+			scene.RenderedPixels,
+			pixelAmount*scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity,
+		)
 		time.Sleep(10 * time.Millisecond)
 	}
-	scene.passes.SavePassesToImages("passes", scene.RenderContext)
-	scene.passes.ClearPasses()
+	scene.imageBuffer.DivAll(float32(scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity))
+	scene.imageBuffer.SaveToFile("result.png")
 }

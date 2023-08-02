@@ -2,6 +2,7 @@ package Structures
 
 import (
 	"RayTracer/Maths"
+	"sync"
 )
 
 func GenerateViewportGrid(imgWidth int, imgHeight int, viewportCorners [4]Maths.Vector3, lensSize Maths.Vector2) [][]Maths.Vector3 {
@@ -21,21 +22,24 @@ func GenerateViewportGrid(imgWidth int, imgHeight int, viewportCorners [4]Maths.
 	return points
 }
 
-func RenderTile(points [][]Maths.Vector3, focalPoint Maths.Vector3, startFragment Maths.Vector2, endFragment Maths.Vector2, passes *RenderPasses, ctx *RenderContext) {
+func RenderTile(points [][]Maths.Vector3, focalPoint Maths.Vector3, startFragment Maths.Vector2, endFragment Maths.Vector2, imgBuff *ImageBuffer, ctx *RenderContext, mutex *sync.Mutex, rSamples *int) {
 	for i := 0; i < ctx.RenderSettings.ProgressiveRenderingPassQuantity; i++ {
 		for fragmentX := int(startFragment.X); fragmentX < int(endFragment.X); fragmentX++ {
-			if fragmentX >= passes.Width {
+			if fragmentX >= imgBuff.GetWidth() {
 				continue
 			}
 			for fragmentY := int(startFragment.Y); fragmentY < int(endFragment.Y); fragmentY++ {
-				if fragmentY >= passes.Height {
+				if fragmentY >= imgBuff.GetHeight() {
 					continue
 				}
 				point := points[fragmentX][fragmentY].Add(ctx.Scene.Camera.Position)
 				rayDirection := point.Sub(focalPoint).Normalized()
 				ray := TraceStartRay(point, rayDirection, ctx)
-				passes.DrawRay(fragmentX, fragmentY, ray)
+				mutex.Lock()
+				imgBuff.Add(fragmentX, fragmentY, ray)
 				ctx.Scene.RenderedPixels++
+				*rSamples++
+				mutex.Unlock()
 			}
 		}
 	}

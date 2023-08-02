@@ -1,6 +1,7 @@
 package Color
 
 import (
+	"RayTracer/Maths"
 	"image/color"
 	"math"
 )
@@ -93,6 +94,17 @@ func (color Color) Grayscale() float32 {
 	return (color.R + color.G + color.B) / 3
 }
 
+func (color Color) VLength() float32 {
+	return float32(math.Sqrt(float64(color.R*color.R + color.B*color.B + color.G*color.G)))
+}
+
+func (color Color) Normalize() {
+	l := color.VLength()
+	color.R /= l
+	color.G /= l
+	color.B /= l
+}
+
 func FromImageColor(clr color.Color) Color {
 	r, g, b, _ := clr.RGBA()
 	return Color{float32(r) / 255, float32(g) / 255, float32(b) / 255}
@@ -101,4 +113,20 @@ func FromImageColor(clr color.Color) Color {
 func (clr *Color) ToImageColor() color.Color {
 	r, g, b := uint8(clr.R*255), uint8(clr.G*255), uint8(clr.B*255)
 	return color.RGBA{R: r, G: g, B: b, A: 255}
+}
+
+func (clr Color) Dot(vector Maths.Vector3) float32 {
+	return clr.R*vector.X + clr.G*vector.Y + clr.B*vector.Z
+}
+
+func (clr Color) DotC(color Color) float32 {
+	return clr.R*color.R + clr.G*color.G + clr.B*color.B
+}
+
+func MakeColor2DArray(dim1 int, dim2 int) [][]Color {
+	arr := make([][]Color, dim1)
+	for i := 0; i < dim1; i++ {
+		arr[i] = make([]Color, dim2)
+	}
+	return arr
 }

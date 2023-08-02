@@ -31,3 +31,7 @@ func (vec Vector2) Normalized() Vector2 {
 	l := vec.Length()
 	return Vector2{vec.X / l, vec.Y / l}
 }
+
+func (vec Vector2) Dot(other Vector2) float32 {
+	return vec.X*other.X + vec.Y*other.Y
+}

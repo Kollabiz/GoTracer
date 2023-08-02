@@ -26,7 +26,7 @@ func DrawColorArrayToImage(imgName string, colors [][]Color.Color) {
 }
 
 func Vector2Color(arr [][]Maths.Vector3) [][]Color.Color {
-	conv := Maths.MakeColor2DArray(len(arr), len(arr[0]))
+	conv := Color.MakeColor2DArray(len(arr), len(arr[0]))
 	for x := 0; x < len(arr); x++ {
 		for y := 0; y < len(arr[0]); y++ {
 			v := arr[x][y].Add(Maths.Vector3{1, 1, 1}).DivF(2)
@@ -37,7 +37,7 @@ func Vector2Color(arr [][]Maths.Vector3) [][]Color.Color {
 }
 
 func Bool2Color(arr [][]bool) [][]Color.Color {
-	conv := Maths.MakeColor2DArray(len(arr), len(arr[0]))
+	conv := Color.MakeColor2DArray(len(arr), len(arr[0]))
 	tCl, fCl := Color.MakeColor(0, 0, 200), Color.MakeColor(200, 0, 0)
 	for x := 0; x < len(arr); x++ {
 		for y := 0; y < len(arr[0]); y++ {
@@ -52,7 +52,7 @@ func Bool2Color(arr [][]bool) [][]Color.Color {
 }
 
 func Float2Color(arr [][]float32, depth float32) [][]Color.Color {
-	conv := Maths.MakeColor2DArray(len(arr), len(arr[0]))
+	conv := Color.MakeColor2DArray(len(arr), len(arr[0]))
 	for x := 0; x < len(arr); x++ {
 		for y := 0; y < len(arr[0]); y++ {
 			clr := arr[x][y] / depth

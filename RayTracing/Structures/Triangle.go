@@ -18,6 +18,10 @@ func (tri Triangle) CalcSecondEdge() Maths.Vector3 {
 	return tri.V3.Position.Sub(tri.V1.Position)
 }
 
+func (tri Triangle) CalcThirdEdge() Maths.Vector3 {
+	return tri.V3.Position.Sub(tri.V2.Position)
+}
+
 func (tri Triangle) Moved(offset Maths.Vector3) Triangle {
 	return Triangle{tri.V1.Moved(offset), tri.V2.Moved(offset), tri.V3.Moved(offset), tri.TriangleNormal, tri.Material}
 }
@@ -43,6 +47,10 @@ func (tri Triangle) GetUv(barycentricCoordinates Maths.Vector3) Maths.Vector2 {
 
 func (tri Triangle) GetSmoothNormal(barycentricCoordinates Maths.Vector3) Maths.Vector3 {
 	return Maths.TriInterpolate(tri.V1.VertexNormal, tri.V2.VertexNormal, tri.V2.VertexNormal, barycentricCoordinates)
+}
+
+func (tri Triangle) GetCenter() Maths.Vector3 {
+	return tri.V1.Position.Add(tri.V2.Position).Add(tri.V3.Position).DivF(3)
 }
 
 // Matrix multiplication

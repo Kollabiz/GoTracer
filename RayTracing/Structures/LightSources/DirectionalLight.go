@@ -15,7 +15,7 @@ type DirectionalLight struct {
 
 func (light *DirectionalLight) GetLight(position Maths.Vector3, normal Maths.Vector3, excludeTri *Structures.Triangle, ctx *Structures.RenderContext) Color.Color {
 	d := float32(math.Max(float64(normal.Dot(light.Direction)), float64(ctx.MinLightIntensity))) * light.Intensity
-	ray := Structures.TraceRay(position, light.Direction, ctx, excludeTri)
+	ray := Structures.CastRay(position, light.Direction, ctx, excludeTri)
 	if ray.Hit {
 		return light.Color.MulF(ctx.MinLightIntensity * d)
 	} else {

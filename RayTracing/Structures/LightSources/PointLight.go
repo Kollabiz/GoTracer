@@ -20,11 +20,12 @@ type PointLight struct {
 
 func (light *PointLight) GetLight(position Maths.Vector3, normal Maths.Vector3, excludeTri *Structures.Triangle, ctx *Structures.RenderContext) Color.Color {
 	distance := light.Position.Sub(position).Length()
+	attenuation := distance * distance
 	dot := float32(math.Max(float64(light.Position.Sub(position).Normalized().Dot(normal)), 0))
 	if distance < Epsilon {
 		return light.Color.MulF(light.Intensity)
 	} // Zero division
-	mul := float32(math.Min(float64(light.Intensity/distance*dot), 1))
+	mul := float32(math.Min(float64(light.Intensity*dot/attenuation), 1))
 	shadow := Structures.TraceSoftShadow(position, light.Position, light.Radius, ctx, excludeTri)
 	mul *= shadow
 	return light.Color.MulF(mul)
