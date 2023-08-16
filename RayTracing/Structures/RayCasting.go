@@ -41,48 +41,48 @@ func triScale(tri *Triangle) float32 {
 	return (tri.CalcFirstEdge().Length() + tri.CalcSecondEdge().Length() + tri.CalcThirdEdge().Length()) / 3
 }
 
-func canHit(rayOrig, rayDirection Maths.Vector3, tri *Triangle) bool {
-	midpoint := tri.GetCenter()
-	centerRayDir := midpoint.Sub(rayOrig).Normalized()
-	longestEdge := float32(math.Max(math.Max(float64(tri.CalcFirstEdge().Length()), float64(tri.CalcSecondEdge().Length())), float64(tri.CalcThirdEdge().Length())))
-	dot := 1 - centerRayDir.Dot(rayDirection)
-	if dot*triScale(tri) > longestEdge {
-		return false
-	}
-	return true
-}
-
 func CastRay(origin Maths.Vector3, direction Maths.Vector3, ctx *RenderContext, excludeTriangle *Triangle) RayIntersection {
-	ray := Ray{Origin: origin, Direction: direction}
-	var minDepth float32 = math.MaxFloat32
-	var tri *Triangle
-	minResult := MakeNonHitRay()
+	ray := Ray{Origin: origin, Direction: direction.Normalized()}
+	// Precomputing dirFrac
+	dirFrac := Maths.MakeVector3(1/ray.Direction.X, 1/ray.Direction.Y, 1/ray.Direction.Z)
+	var t *float64
+	// Allocating a big slice to not bother GC much
+	var meshes = make([]Mesh, len(ctx.Scene.Meshes))
+	actualMeshCount := 0
 	for i := 0; i < len(ctx.Scene.Meshes); i++ {
-		mesh := ctx.Scene.Meshes[i].GetTransformed()
-		for j := 0; j < len(mesh); j++ {
-			tri = &mesh[j]
-			if excludeTriangle != nil && AreEqualTriangles(tri, excludeTriangle) {
+		if ray.IntersectAABB(ctx.Scene.Meshes[i].Volume, dirFrac, t) {
+			meshes[actualMeshCount] = ctx.Scene.Meshes[i]
+			actualMeshCount++
+		}
+	}
+	// Intersecting meshes
+	var nearestIntersection = MakeNonHitRay()
+	var minDepth = float32(math.Inf(1))
+	for i := 0; i < actualMeshCount; i++ {
+		nodeMesh := meshes[i].GetTransformed()
+		var triangle *Triangle
+		for j := 0; j < len(nodeMesh); j++ {
+			triangle = &nodeMesh[j]
+			// Backface culling
+			if triangle.TriangleNormal.Dot(direction) >= 0 {
 				continue
 			}
-			if tri.TriangleNormal.Dot(direction) >= 0 {
-				continue
-			}
-			rayHit, hitPos, bHitPos := ray.Intersect(tri)
+			rayHit, hitPos, bHitPos := ray.Intersect(triangle)
 			if rayHit {
-				rayLength := hitPos.Sub(origin).Length()
-				if rayLength < minDepth {
-					minDepth = rayLength
-					minResult = MakeRayIntersection(
-						true,
-						&ctx.Scene.Meshes[i],
-						tri,
+				rayDepth := hitPos.Sub(origin).Length()
+				if rayDepth < minDepth {
+					minDepth = rayDepth
+					nearestIntersection = MakeRayIntersection(
+						rayHit,
+						&meshes[i],
+						triangle,
 						hitPos,
 						bHitPos,
-						rayLength,
+						rayDepth,
 					)
 				}
 			}
 		}
 	}
-	return minResult
+	return nearestIntersection
 }

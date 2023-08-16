@@ -22,7 +22,8 @@ func GenerateViewportGrid(imgWidth int, imgHeight int, viewportCorners [4]Maths.
 	return points
 }
 
-func RenderTile(points [][]Maths.Vector3, focalPoint Maths.Vector3, startFragment Maths.Vector2, endFragment Maths.Vector2, imgBuff *ImageBuffer, ctx *RenderContext, mutex *sync.Mutex, rSamples *int) {
+func RenderTile(points [][]Maths.Vector3, focalPoint Maths.Vector3, startFragment Maths.Vector2, endFragment Maths.Vector2, imgBuff *ImageBuffer, ctx *RenderContext) {
+	var waitGroup sync.WaitGroup
 	for i := 0; i < ctx.RenderSettings.ProgressiveRenderingPassQuantity; i++ {
 		for fragmentX := int(startFragment.X); fragmentX < int(endFragment.X); fragmentX++ {
 			if fragmentX >= imgBuff.GetWidth() {
@@ -34,14 +35,11 @@ func RenderTile(points [][]Maths.Vector3, focalPoint Maths.Vector3, startFragmen
 				}
 				point := points[fragmentX][fragmentY].Add(ctx.Scene.Camera.Position)
 				rayDirection := point.Sub(focalPoint).Normalized()
-				ray := TraceStartRay(point, rayDirection, ctx)
-				mutex.Lock()
-				imgBuff.Add(fragmentX, fragmentY, ray)
-				ctx.Scene.RenderedPixels++
-				*rSamples++
-				mutex.Unlock()
+				waitGroup.Add(1)
+				go TraceStartRay(point, rayDirection, ctx, imgBuff, fragmentX, fragmentY, &waitGroup)
 			}
 		}
+		waitGroup.Wait()
 	}
 	ctx.Scene.RenderedTiles++
 }

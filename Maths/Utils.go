@@ -32,15 +32,24 @@ func TriInterpolate2(v1 Vector2, v2 Vector2, v3 Vector2, factor Vector3) Vector2
 }
 
 func RandomPointOnHemisphere(normal Vector3, radius float32) Vector3 {
-	x := float32(rand.NormFloat64()) * radius
-	y := float32(rand.NormFloat64()) * radius
-	if y < 0 {
-		y *= -1
-	}
-	z := float32(rand.NormFloat64())
-	vec := MakeVector3(x, y, z)
-	vec = vec.Normalized()
-	return vec.MatMul(GetTangentSpace(normal))
+	azimuthal := 2 * math.Pi * (math.Mod(rand.NormFloat64(), 1))
+	sin2Zenith := math.Mod(rand.NormFloat64(), 1)
+	sinZenith := math.Sqrt(sin2Zenith)
+	x := sinZenith * math.Cos(azimuthal) * float64(radius)
+	y := sinZenith * math.Sin(azimuthal) * float64(radius)
+	z := math.Sqrt(1 - sin2Zenith)
+	return Vector3{
+		float32(x),
+		float32(y),
+		float32(z),
+	}.MatMul(GetTangentSpace(normal))
+}
+
+func FastInverseSqrt(x float32) float32 {
+	i := math.Float32bits(x)
+	j := 0x5f3759df - (i >> 1)
+	y := math.Float32frombits(j)
+	return y * (1.5 - 0.5*x*y*y)
 }
 
 func GetTangentSpace(normal Vector3) *Mat3 {

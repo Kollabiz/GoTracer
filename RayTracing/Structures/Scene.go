@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"sync"
-	"time"
 )
 
 type Scene struct {
@@ -13,7 +12,7 @@ type Scene struct {
 	Lights         []ILightSource
 	Camera         Camera
 	RenderedTiles  int
-	RenderedPixels int
+	RenderedPixels int32
 	RenderContext  *RenderContext
 	imageBuffer    *ImageBuffer
 }
@@ -65,41 +64,28 @@ func (scene *Scene) AddLights(lights []ILightSource) {
 func (scene *Scene) bakeMeshTransforms() {
 	for i := 0; i < len(scene.Meshes); i++ {
 		scene.Meshes[i].BakeTransform()
+		scene.Meshes[i].BuildMeshTree()
+		mMin, mMax := scene.Meshes[i].GetBoundaries()
+		scene.Meshes[i].Volume = &BoxVolume{
+			Min: mMin,
+			Max: mMax,
+		}
 	}
 }
 
 func (scene *Scene) RenderScene() {
 	scene.bakeMeshTransforms()
+	fmt.Println("Building BVH tree")
+	fmt.Printf("Done (%d meshes)\n", len(scene.Meshes))
 	tileCountY := int(math.Ceil(float64(scene.RenderContext.ImageHeight) / float64(scene.RenderContext.RenderSettings.TileHeight)))
 	tileCountX := int(math.Ceil(float64(scene.RenderContext.ImageWidth) / float64(scene.RenderContext.RenderSettings.TileWidth)))
-	pixelAmount := scene.RenderContext.ImageWidth * scene.RenderContext.ImageHeight
 	points := GenerateViewportGrid(scene.RenderContext.ImageWidth, scene.RenderContext.ImageHeight, scene.Camera.GetViewportPlaneCorners(), scene.Camera.LensSize)
 	focalPoint := Maths.Vector3{0, 0, scene.Camera.FocalLength}.Add(scene.Camera.Position)
-	var renderedSamples int
-	var mutex sync.Mutex
-	fmt.Printf(
-		`------------DEBUG--------------
-Image width: %d
-Image height: %d
-Tiles X: %d
-Tiles Y: %d
-Tile width: %d
-Tile height: %d
-Pixel amount: %d
-Camera lens size: (%f; %f)
-Mesh count: %d
-`,
-		scene.RenderContext.ImageWidth,
-		scene.RenderContext.ImageHeight,
-		tileCountX,
-		tileCountY,
-		scene.RenderContext.RenderSettings.TileWidth,
-		scene.RenderContext.RenderSettings.TileHeight,
-		pixelAmount,
-		scene.Camera.LensSize.X,
-		scene.Camera.LensSize.Y,
-		len(scene.Meshes),
-	)
+	fmt.Printf("Starting rendering (%d threads)\n", tileCountX*tileCountY)
+	var wGroup sync.WaitGroup
+	totalPixels := scene.RenderContext.ImageWidth * scene.RenderContext.ImageHeight * scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity
+	go scene.displayProgress(int32(totalPixels), int32(tileCountX*tileCountY), &wGroup)
+	wGroup.Add(1)
 	for tileX := 0; tileX < tileCountX; tileX++ {
 		for tileY := 0; tileY < tileCountY; tileY++ {
 			tileStart := Maths.Vector2{
@@ -110,19 +96,26 @@ Mesh count: %d
 				float32((tileX + 1) * scene.RenderContext.RenderSettings.TileWidth),
 				float32((tileY + 1) * scene.RenderContext.RenderSettings.TileHeight),
 			}
-			go RenderTile(points, focalPoint, tileStart, tileEnd, scene.imageBuffer, scene.RenderContext, &mutex, &renderedSamples)
+			RenderTile(points, focalPoint, tileStart, tileEnd, scene.imageBuffer, scene.RenderContext)
 		}
 	}
-	for scene.RenderedTiles < tileCountY*tileCountX {
-		fmt.Printf(" Rendering progress: %d%% (%d/%d tiles | %d/%d pixels)   				            \r",
-			int(float32(scene.RenderedPixels)/float32(pixelAmount*scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity)*100),
-			scene.RenderedTiles,
-			tileCountY*tileCountX,
-			scene.RenderedPixels,
-			pixelAmount*scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity,
-		)
-		time.Sleep(10 * time.Millisecond)
-	}
+	wGroup.Wait()
+	fmt.Println("Done")
+	fmt.Println("Dumping render result")
 	scene.imageBuffer.DivAll(float32(scene.RenderContext.RenderSettings.ProgressiveRenderingPassQuantity))
 	scene.imageBuffer.SaveToFile("result.png")
+	fmt.Println("Rendering done")
+}
+
+func (scene *Scene) displayProgress(totalPixels int32, totalTiles int32, waitGroup *sync.WaitGroup) {
+	for scene.RenderedPixels < totalPixels {
+		fmt.Printf(" Rendering progress: %d%% (%d/%d tiles, %d/%d rays)\r",
+			int(float32(scene.RenderedPixels)/float32(totalPixels)*100),
+			scene.RenderedTiles,
+			totalTiles,
+			scene.RenderedPixels,
+			totalPixels,
+		)
+	}
+	waitGroup.Done()
 }

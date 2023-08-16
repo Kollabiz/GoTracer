@@ -15,7 +15,11 @@ func MakeVector3(x float32, y float32, z float32) Vector3 {
 }
 
 func (vector Vector3) Length() float32 {
-	return float32(math.Sqrt(math.Pow(float64(vector.X), 2) + math.Pow(float64(vector.Y), 2) + math.Pow(float64(vector.Z), 2)))
+	return float32(math.Sqrt(float64(vector.X*vector.X + vector.Y*vector.Y + vector.Z*vector.Z)))
+}
+
+func (vector Vector3) LengthSqr() float32 {
+	return vector.X*vector.X + vector.Y*vector.Y + vector.Z*vector.Z
 }
 
 func (vector Vector3) Dot(v2 Vector3) float32 {
@@ -54,7 +58,7 @@ func (vector Vector3) DivF(f float32) Vector3 {
 }
 
 func (vector Vector3) Normalized() Vector3 {
-	return vector.DivF(vector.Length())
+	return vector.MulF(FastInverseSqrt(vector.LengthSqr()))
 }
 
 func (vector Vector3) Reflect(normal Vector3) Vector3 {
@@ -77,6 +81,14 @@ func (vector Vector3) Invert() Vector3 {
 	}
 }
 
+func (vector Vector3) Abs() Vector3 {
+	return Vector3{
+		float32(math.Abs(float64(vector.X))),
+		float32(math.Abs(float64(vector.Y))),
+		float32(math.Abs(float64(vector.Z))),
+	}
+}
+
 // Comparing
 
 func AreEqualVectors(vec1 Vector3, vec2 Vector3) bool {
@@ -95,4 +107,8 @@ func (vector Vector3) MatMul(mat *Mat3) Vector3 {
 
 func ZeroVector3() Vector3 {
 	return Vector3{0, 0, 0}
+}
+
+func InfiniteVector3(sign int) Vector3 {
+	return Vector3{float32(math.Inf(sign)), float32(math.Inf(sign)), float32(math.Inf(sign))}
 }

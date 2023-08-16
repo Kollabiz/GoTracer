@@ -1,6 +1,9 @@
 package Structures
 
-import "RayTracer/Maths"
+import (
+	"RayTracer/Maths"
+	"math"
+)
 
 type Triangle struct {
 	V1             *Vertex
@@ -57,4 +60,29 @@ func (tri Triangle) GetCenter() Maths.Vector3 {
 
 func (tri Triangle) MatMul(matrix *Maths.Mat3) Triangle {
 	return MakeTriangle(tri.V1.MatMul(matrix), tri.V2.MatMul(matrix), tri.V3.MatMul(matrix), tri.Material)
+}
+
+// Generic stuff
+
+func (tri Triangle) GetBoundingBox() BoxVolume {
+	var minX, minY, minZ = float32(math.Inf(1)), float32(math.Inf(1)), float32(math.Inf(1))
+	var maxX, maxY, maxZ = float32(math.Inf(-1)), float32(math.Inf(-1)), float32(math.Inf(-1))
+	minX = float32(math.Min(float64(tri.V1.Position.X), math.Min(float64(tri.V2.Position.X), float64(tri.V3.Position.X))))
+	minY = float32(math.Min(float64(tri.V1.Position.Y), math.Min(float64(tri.V2.Position.Y), float64(tri.V3.Position.Y))))
+	minZ = float32(math.Min(float64(tri.V1.Position.Z), math.Min(float64(tri.V2.Position.Z), float64(tri.V3.Position.Z))))
+	maxX = float32(math.Max(float64(tri.V1.Position.X), math.Max(float64(tri.V2.Position.X), float64(tri.V3.Position.X))))
+	maxY = float32(math.Max(float64(tri.V1.Position.Y), math.Max(float64(tri.V2.Position.Y), float64(tri.V3.Position.Y))))
+	maxZ = float32(math.Max(float64(tri.V1.Position.Z), math.Max(float64(tri.V2.Position.Z), float64(tri.V3.Position.Z))))
+	return BoxVolume{
+		Min: Maths.Vector3{
+			X: minX,
+			Y: minY,
+			Z: minZ,
+		},
+		Max: Maths.Vector3{
+			X: maxX,
+			Y: maxY,
+			Z: maxZ,
+		},
+	}
 }

@@ -2,6 +2,7 @@ package Structures
 
 import (
 	"RayTracer/Maths"
+	"math"
 )
 
 type Ray struct {
@@ -48,4 +49,29 @@ func (ray *Ray) Intersect(tri *Triangle) (hit bool, intersectionPoint, barycentr
 	}
 	p := ray.GetPoint(t)
 	return true, p, Maths.Vector3{u, v, 1 - u - v}
+}
+
+func (ray *Ray) IntersectAABB(box *BoxVolume, dirFrac Maths.Vector3, t *float64) bool {
+	t1 := float64((box.Min.X - ray.Origin.X) * dirFrac.X)
+	t2 := float64((box.Max.X - ray.Origin.X) * dirFrac.X)
+	t3 := float64((box.Min.Y - ray.Origin.Y) * dirFrac.Y)
+	t4 := float64((box.Max.Y - ray.Origin.Y) * dirFrac.Y)
+	t5 := float64((box.Min.Z - ray.Origin.Z) * dirFrac.Z)
+	t6 := float64((box.Max.Z - ray.Origin.Z) * dirFrac.Z)
+
+	tmin := math.Max(math.Max(math.Min(t1, t2), math.Min(t3, t4)), math.Min(t5, t6))
+	tmax := math.Min(math.Min(math.Max(t1, t2), math.Max(t3, t4)), math.Max(t5, t6))
+
+	if tmax < 0 {
+		t = &tmax
+		return true
+	}
+
+	if tmin > tmax {
+		t = &tmax
+		return false
+	}
+
+	t = &tmin
+	return true
 }

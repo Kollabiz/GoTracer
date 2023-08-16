@@ -10,7 +10,24 @@ import (
 )
 
 func TestRender(t *testing.T) {
-	scene := Structures.NewScene(256, 256)
+	rc := &Structures.RenderContext{
+		ImageWidth:        256,
+		ImageHeight:       256,
+		BackgroundColor:   Color.Color{R: 200, G: 200, B: 200},
+		MinLightIntensity: 0.2,
+		RenderSettings: &Structures.RenderSettings{
+			UseIndirectIllumination:              true,
+			OptimizeIndirectIlluminationRayCount: false,
+			IndirectIlluminationSampleCount:      16,
+			IndirectIlluminationDepth:            1,
+			ProgressiveRenderingPassQuantity:     1,
+			UseTiling:                            true,
+			TileWidth:                            256,
+			TileHeight:                           256,
+			ShadowSamples:                        1,
+		},
+	}
+	scene := Structures.NewScene(rc)
 	scene.Camera.SetRotation(Maths.Vector3{
 		X: 0,
 		Y: 0,
@@ -18,14 +35,10 @@ func TestRender(t *testing.T) {
 	})
 	scene.Camera.Position = Maths.Vector3{0, 0, 10}
 	meshes, _ := ObjParser.ParseObjFile("Examples\\high_poly.obj")
-	pointLight := LightSources.PointLight{
+	pointLight := LightSources.DirectionalLight{
 		Color:     Color.Color{1, 1, 1},
-		Position:  Maths.MakeVector3(0.2, 0, 2),
-		Radius:    0.1,
-		Intensity: 1.7,
-	}
-	for i := 0; i < len(meshes); i++ {
-		meshes[i].SetRotation(Maths.Vector3{X: 0})
+		Direction: Maths.Vector3{0, 0.2, 1},
+		Intensity: 1,
 	}
 	scene.AddLight(&pointLight)
 	scene.AddMeshes(meshes)
